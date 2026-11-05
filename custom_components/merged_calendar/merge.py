@@ -304,7 +304,7 @@ def merge_times(group: list[Feat]) -> tuple[str, str, str | None]:
         s = min(f.s_day for f in group)
         e = max(f.e_day for f in group)
         return date.fromordinal(s).isoformat(), date.fromordinal(e).isoformat(), None
-    # Scott's rule: exact time from the email/booking source when there is one,
+    # Time rule: exact time from the email/booking source when there is one,
     # otherwise the earliest start across all copies.
     auth = [f for f in timed if f.authoritative]
     basis = auth or timed
