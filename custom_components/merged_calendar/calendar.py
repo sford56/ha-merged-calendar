@@ -5,12 +5,14 @@ from __future__ import annotations
 import asyncio
 from datetime import date, datetime
 import logging
+from typing import Any
 
 from homeassistant.components.calendar import CalendarEntity, CalendarEvent
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.start import async_at_started
 from homeassistant.util import dt as dt_util
 
 from . import merge
@@ -20,7 +22,26 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    async_add_entities([MergedCalendarEntity(entry)], update_before_add=True)
+    # No update_before_add: at startup the source calendars may not be loaded yet.
+    # The entity refreshes itself once Home Assistant has fully started.
+    async_add_entities([MergedCalendarEntity(entry)])
+
+
+def _local_iso(value: Any) -> Any:
+    """Datetime strings in local time with local offset; dates untouched.
+
+    Sources report datetimes in mixed offsets (some Google events come back in UTC).
+    Matching compares calendar days and prints wall-clock times, so everything is put
+    in Home Assistant's own time zone first.
+    """
+    if not isinstance(value, str) or len(value) <= 10:
+        return value
+    parsed = dt_util.parse_datetime(value)
+    if parsed is None:
+        return value
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt_util.get_default_time_zone())
+    return dt_util.as_local(parsed).isoformat()
 
 
 def _to_dt(value: str) -> date | datetime:
@@ -58,6 +79,14 @@ class MergedCalendarEntity(CalendarEntity):
         self._event: CalendarEvent | None = None
         self._merged_count = 0
         self._failed: list[str] = []
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        async def _first_refresh(_hass: HomeAssistant) -> None:
+            await self.async_update_ha_state(force_refresh=True)
+
+        self.async_on_remove(async_at_started(self.hass, _first_refresh))
 
     @property
     def _sources(self) -> list[str]:
@@ -98,6 +127,8 @@ class MergedCalendarEntity(CalendarEntity):
                 failed.append(entity_id)
                 continue
             for i, ev in enumerate(res):
+                ev["start"] = _local_iso(ev.get("start"))
+                ev["end"] = _local_iso(ev.get("end"))
                 ev.setdefault("uid", f"{entity_id}:{ev.get('start')}:{ev.get('summary')}:{i}")
             by_cal[entity_id] = res
         return by_cal, failed
