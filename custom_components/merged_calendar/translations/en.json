@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Merged calendar",
+        "description": "Pick the calendars to combine. Events that appear more than once, even with slightly different titles or times, are shown once with every copy's details kept. Source calendars are never changed.",
+        "data": {
+          "name": "Name",
+          "calendars": "Calendars to merge"
+        }
+      }
+    },
+    "error": {
+      "no_calendars": "Pick at least one calendar.",
+      "no_nesting": "A merged calendar can't include another merged calendar."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Calendars to merge",
+        "data": {
+          "calendars": "Calendars to merge"
+        }
+      }
+    },
+    "error": {
+      "no_calendars": "Pick at least one calendar.",
+      "no_nesting": "A merged calendar can't include another merged calendar."
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "domain": "merged_calendar",
+  "name": "Merged Calendar",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["calendar"],
+  "documentation": "https://github.com/sford56/ha-merged-calendar",
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/sford56/ha-merged-calendar/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}
